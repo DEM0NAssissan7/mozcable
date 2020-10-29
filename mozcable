@@ -1,0 +1,157 @@
+#!/bin/bash
+# Frontend for mozwire-linux
+
+#Constants
+prgmname=mozcable
+dirname=$prgmname.config
+dir=~/$dirname
+bin=/bin
+mzversion=v0.7.0
+mzwr=https://github.com/NilsIrl/MozWire/releases/download/$mzversion/mozwire-linux
+nserver=servers
+oldserver=oldserver.txt
+filename=server.txt
+wgserver=
+oserver=
+
+if [[ -d $dir ]]; then true
+else
+echo Welcome to $prgmname
+echo
+echo Running setup..
+echo
+echo
+echo BE ADVISED: YOU MUST HAVE wireguard-tools INSTALLED IN ORDER FOR THE PROGRAM TO WORK
+read -p "Press enter to continue"
+echo
+echo Creating program directory
+sudo mkdir $dir
+sudo chmod 777 $dir
+sudo cp $prgmname $dir
+cd $dir
+echo
+echo Creating prefix
+echo Downloading mozwire-linux
+echo
+sudo wget --no-verbose $mzwr
+echo Copying $prgmname to $bin
+sudo cp $prgmname $bin
+echo Renaming mozwire-linux
+sudo mv mozwire-linux mozwire
+sudo chmod +x mozwire
+sudo rm -r $bin/mozwire
+sudo cp mozwire $bin
+echo
+echo Copying $prgmname into $bin
+sudo rm -r $bin/$prgmname
+sudo cp $prgmname $bin
+echo
+echo
+echo Creating record file
+sudo touch $oldserver
+sudo chmod 777 $oldserver
+echo Beginning first time setup for mozwire
+echo
+echo You MUST follow the next few steps in order to proceed
+echo Creating MOZ_TOKEN
+export MOZ_TOKEN=$(mozwire --print-token)
+echo
+echo
+echo Creating VPN files
+echo
+read -p "Please enter which countries you want your server (ex: us / us|ca|uk|fr):" scname
+mozwire relay save -n 0 -p 53 -o $nserver $scname
+echo
+echo $prgmname setup has been completed!
+echo Now initializing $prgmname...
+fi
+
+
+#Main loop for command line
+while true; do
+read -p "$prgmname- " command
+function help {
+	echo
+	echo Be advised: all shell commands are still active
+	echo Using any shell command that is not listed here will execute it
+	echo
+	echo help -- generate this screen
+	echo tutorial -- INCOMPLETE a walkthrough on how to use the program
+	echo connect -- connect to mozillavpn
+	echo disconnect -- disconnect from mozillavpn
+	echo token -- generate new token --so you do not have to keep logging in through browser--
+	echo genserver -- generate new set of servers. --try this if servers are not working--
+	echo server -- set new server to connect vpn
+	echo quick -- quickly connect to a server without any setup whatsoever 
+	echo list -- list all VPN servers
+	echo test -- test to make sure that the VPN is working
+	echo stat -- check status of VPN
+	echo exit -- exit the $prgmname environment
+}
+function token {
+	export MOZ_TOKEN=$(mozwire --print-token)
+}
+function genserver {
+	echo Generating new server list
+	read -p "Please enter which countries you want your server (ex: us / us|ca|uk|fr):" scname
+	rm -r $dir/$nserver
+	mozwire relay save -n 0 -p 53 -o $dir/$nserver $scname
+}
+function list {
+	ls $dir/$nserver
+}
+function server {
+	wgserver=$1
+}
+function connect {
+	wg-quick up $dir/$nserver/$wgserver
+}
+function disconnect {
+	wg-quick down $dir/$nserver/$wgserver
+}
+function test {
+	tempdd=`ping -c 1 gnu.org`
+	tempddd=`echo $tempdd | grep -i 64`
+	if [[ $tempddd ]];then 
+	echo Ping successful
+	else
+	echo Ping failed
+	echo Automatically disconnecting from VPN...
+	wg-quick down $dir/$nserver/$wgserver
+	fi
+}
+function quick {
+	echo Running quick setup...
+	echo
+	echo FOLLOW ALL STEPS
+	echo
+	token
+	echo Generating new server list
+	read -p "Please enter which countries you want your server (ex: us / us|ca|uk|fr):" scname
+	rm -r $dir/$nserver
+	mozwire relay save -n 0 -p 53 -o $dir/$nserver $scname
+	tempdd=`list|sort -R|sed -n '1p'`
+	server $tempdd
+	connect
+	test
+}
+function tutorial {
+	echo !!!
+	echo INCOMPLETE
+	echo !!!
+	echo Welcome to the $prgmname tutorial
+	echo Using $prgmname is easy, all you need is something to help you
+	read -p "Press enter to continue"
+	echo
+	echo First things first, the program needs something called a token
+	echo A token is something like a password
+	echo Use the token command 
+}
+function stat {
+	sudo wg
+}
+$command
+done
+
+
+
