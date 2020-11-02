@@ -11,8 +11,7 @@ mzwr=https://github.com/NilsIrl/MozWire/releases/download/$mzversion/mozwire-lin
 nserver=servers
 oldserver=oldserver.txt
 filename=server.txt
-wgserver=
-oserver=
+wgserver=us132-wireguard.conf
 
 if [[ -d $dir ]]; then true
 else
@@ -76,16 +75,17 @@ function help {
 	echo Using any shell command that is not listed here will execute it
 	echo
 	echo help -- generate this screen
-	echo tutorial -- INCOMPLETE a walkthrough on how to use the program
 	echo connect -- connect to mozillavpn
 	echo disconnect -- disconnect from mozillavpn
-	echo token -- generate new token --so you do not have to keep logging in through browser--
-	echo genserver -- generate new set of servers. --try this if servers are not working--
+	echo token -- generate new token -so you do not have to keep logging in through browser-
+	echo genserver -- generate new set of servers. -try this if servers are not working-
 	echo server -- set new server to connect vpn
-	echo quick -- quickly connect to a server without any setup whatsoever 
+	echo quick -- quickly connect to a server without any command-line trash 
 	echo list -- list all VPN servers
 	echo test -- test to make sure that the VPN is working
 	echo stat -- check status of VPN
+	echo listdev -- list devices linked to your mozillavpn account
+	echo rmdev -- remove device from mozillavpn account
 	echo exit -- exit the $prgmname environment
 }
 function token {
@@ -93,7 +93,7 @@ function token {
 }
 function genserver {
 	echo Generating new server list
-	read -p "Please enter which countries you want your server (ex: us / us|ca|uk|fr):" scname
+	read -p "Please enter which countries you want your servers in (ex: us / us|ca|uk|fr):" scname
 	rm -r $dir/$nserver
 	mozwire relay save -n 0 -p 53 -o $dir/$nserver $scname
 }
@@ -135,23 +135,16 @@ function quick {
 	connect
 	test
 }
-function tutorial {
-	echo !!!
-	echo INCOMPLETE
-	echo !!!
-	echo Welcome to the $prgmname tutorial
-	echo Using $prgmname is easy, all you need is something to help you
-	read -p "Press enter to continue"
-	echo
-	echo First things first, the program needs something called a token
-	echo A token is something like a password
-	echo Use the token command 
+function listdev {
+	mozwire device list
+}
+function rmdev {
+	mozwire device remove $1
 }
 function stat {
 	sudo wg
 }
 $command
 done
-
 
 
